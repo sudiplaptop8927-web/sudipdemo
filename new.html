@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo College - Official Fee Collection & Student Portal</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- QRCode.js for dynamic UPI QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .print-only { display: none; }
+    @media print {
+      body * { visibility: hidden; }
+      #printableReceipt, #printableReceipt * { visibility: visible; }
+      #printableReceipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+        padding: 20px;
+        background: white;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Global Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- College Logo & Title -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('home')">
+          <div id="navLogoContainer" class="w-12 h-12 rounded-xl bg-blue-700 flex items-center justify-center text-white font-bold text-xl shadow overflow-hidden">
+            <span id="navLogoFallback"><i class="fa-solid fa-graduation-cap"></i></span>
+            <img id="navLogoImg" src="" alt="Logo" class="w-full h-full object-cover hidden">
+          </div>
+          <div>
+            <h1 id="navCollegeName" class="text-xl font-black text-slate-900 tracking-tight leading-tight">Demo College</h1>
+            <p class="text-xs font-semibold text-blue-600 uppercase tracking-wider">Academic & Fee Portal (UG 8-Sem / PG 2-Sem)</p>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          <button onclick="switchView('home')" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-lg hover:bg-slate-50 transition">
+            <i class="fa-solid fa-house mr-1"></i> Home
+          </button>
+          <button onclick="switchView('studentLogin')" class="px-3.5 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
+            <i class="fa-solid fa-user-graduate mr-1"></i> Student Login
+          </button>
+          <button onclick="switchView('adminLogin')" class="px-3.5 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition shadow-sm">
+            <i class="fa-solid fa-shield-halved mr-1"></i> Admin Portal
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Viewport -->
+  <main class="flex-grow">
+
+    <!-- ==================== 1. HOME LANDING VIEW ==================== -->
+    <section id="viewHome" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-8 sm:p-14 text-white shadow-xl relative overflow-hidden mb-10">
+        <div class="relative z-10 max-w-2xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold tracking-wide uppercase mb-4 border border-blue-400/30">
+            <i class="fa-solid fa-graduation-cap"></i> UG (8 Semesters) & PG (2 Semesters) Curriculum
+          </div>
+          <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight mb-4">
+            Welcome to <span id="heroCollegeName" class="text-blue-400">Demo College</span>
+          </h2>
+          <p class="text-slate-300 text-base sm:text-lg mb-8 leading-relaxed">
+            Configure subjects, manage individual subject fees, activate or deactivate semester collections, and settle student dues instantly through automated UPI.
+          </p>
+          <div class="flex flex-wrap gap-4">
+            <button onclick="switchView('studentLogin')" class="px-6 py-3.5 bg-blue-600 hover:bg-blue-500 font-bold rounded-xl shadow-lg transition flex items-center gap-2">
+              <i class="fa-solid fa-wallet"></i> Pay Student Fees
+            </button>
+            <button onclick="switchView('adminLogin')" class="px-6 py-3.5 bg-white/10 hover:bg-white/20 backdrop-blur font-semibold rounded-xl border border-white/20 transition flex items-center gap-2">
+              <i class="fa-solid fa-lock"></i> Administration Access
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Demo Credentials helper -->
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-amber-900 text-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+        <div>
+          <strong class="font-bold flex items-center gap-2"><i class="fa-solid fa-circle-info text-amber-600"></i> Preset Demo Credentials:</strong>
+          <p class="text-amber-800 mt-1 text-xs">
+            <strong>Admin:</strong> user: <code class="bg-amber-100 px-1 rounded font-mono">admin</code> | pass: <code class="bg-amber-100 px-1 rounded font-mono">admin123</code> | Secret Code: <code class="bg-amber-100 px-1 rounded font-mono">123456</code><br>
+            <strong>UG Student:</strong> ID: <code class="bg-amber-100 px-1 rounded font-mono">DC-2026-1001</code> | Phone: <code class="bg-amber-100 px-1 rounded font-mono">9876543210</code> (UG Semester 4)<br>
+            <strong>PG Student:</strong> ID: <code class="bg-amber-100 px-1 rounded font-mono">DC-2026-1002</code> | Phone: <code class="bg-amber-100 px-1 rounded font-mono">9123456780</code> (PG Semester 1)
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="fillStudentDemo()" class="px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-bold hover:bg-amber-700 transition">Fill Demo Student</button>
+          <button onclick="fillAdminDemo()" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-900 transition">Fill Demo Admin</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2. STUDENT LOGIN VIEW ==================== -->
+    <section id="viewStudentLogin" class="max-w-md mx-auto px-4 py-12 hidden">
+      <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl">
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">
+            <i class="fa-solid fa-user-graduate"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-slate-900">Student Portal Login</h2>
+          <p class="text-xs text-slate-500 mt-1">Access subject breakdown and fee dashboard</p>
+        </div>
+
+        <form id="studentLoginForm" onsubmit="handleStudentLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Unique Student ID</label>
+            <input type="text" id="stuLoginId" required placeholder="e.g. DC-2026-1001" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 text-sm font-semibold uppercase">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Registered Mobile Number</label>
+            <input type="tel" id="stuLoginPhone" required placeholder="10-digit mobile number" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 text-sm font-semibold">
+          </div>
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Login to Portal
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== 3. ADMIN LOGIN / REGISTER ==================== -->
+    <section id="viewAdminLogin" class="max-w-md mx-auto px-4 py-12 hidden">
+      <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl">
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+          <button id="adminTabLogin" onclick="toggleAdminTab('login')" class="font-bold text-base text-blue-600 border-b-2 border-blue-600 pb-2">Admin Login</button>
+          <button id="adminTabRegister" onclick="toggleAdminTab('register')" class="font-bold text-base text-slate-400 hover:text-slate-600 pb-2">Register with Code</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="adminLoginForm" onsubmit="handleAdminLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Username</label>
+            <input type="text" id="admUsername" required placeholder="admin" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-900 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password</label>
+            <input type="password" id="admPassword" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-900 text-sm">
+          </div>
+          <button type="submit" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-shield-halved"></i> Access Panel
+          </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="adminRegisterForm" onsubmit="handleAdminRegister(event)" class="space-y-4 hidden">
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800">
+            Use Institutional Secret Code (Default: <strong>123456</strong>)
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Secret Code</label>
+            <input type="password" id="regSecretCode" required placeholder="Secret Code" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-mono font-bold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">New Username</label>
+            <input type="text" id="regUsername" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">New Password</label>
+            <input type="password" id="regPassword" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm">
+          </div>
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition">
+            Register Admin
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== 4. STUDENT DASHBOARD ==================== -->
+    <section id="viewStudentDashboard" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+      <!-- Profile Header -->
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+          <div class="relative group">
+            <div class="w-24 h-24 rounded-2xl bg-slate-200 border-2 border-blue-600 overflow-hidden shadow-md flex items-center justify-center">
+              <img id="stuDashPhoto" src="" alt="Student" class="w-full h-full object-cover">
+              <span id="stuDashPhotoPlaceholder" class="text-3xl text-slate-400 hidden"><i class="fa-solid fa-user"></i></span>
+            </div>
+            <button onclick="openCorrectionModal('photo')" title="Request photo change" class="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-full text-xs shadow hover:bg-blue-700 transition">
+              <i class="fa-solid fa-camera"></i>
+            </button>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-3 justify-center sm:justify-start">
+              <h2 id="stuDashName" class="text-2xl font-black text-slate-900">Student Name</h2>
+              <span id="stuDashCategoryBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-100 text-blue-800">UG</span>
+            </div>
+            <div class="flex flex-wrap gap-y-1 gap-x-4 text-xs font-semibold text-slate-500 mt-2 justify-center sm:justify-start">
+              <span><i class="fa-solid fa-id-card text-blue-600 mr-1"></i> ID: <strong id="stuDashId" class="text-slate-800 font-mono">DC-2026-0000</strong></span>
+              <span><i class="fa-solid fa-graduation-cap text-blue-600 mr-1"></i> <span id="stuDashSemester">UG Semester 1</span></span>
+              <span><i class="fa-solid fa-book-open text-blue-600 mr-1"></i> <span id="stuDashCourse">B.Tech</span></span>
+              <span><i class="fa-solid fa-phone text-blue-600 mr-1"></i> <span id="stuDashPhone">0000000000</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="openCorrectionModal('details')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square"></i> Apply for Correction
+          </button>
+          <button onclick="logoutStudent()" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Semester Fee Status Alert (Active vs Inactive) -->
+      <div id="stuSemesterStatusAlert" class="mb-8"></div>
+
+      <!-- Financial Metrics -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Prescribed Fees</span>
+          <div class="text-3xl font-black text-slate-900 mt-2">₹<span id="stuDashTotalFees">0</span></div>
+          <div class="text-xs text-slate-500 mt-1">Includes registered subjects & base fee</div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Total Paid Fees</span>
+          <div class="text-3xl font-black text-emerald-600 mt-2">₹<span id="stuDashPaidFees">0</span></div>
+          <div class="text-xs text-slate-500 mt-1">Confirmed with institutional receipts</div>
+        </div>
+
+        <div class="bg-gradient-to-br from-blue-700 to-indigo-800 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-200">Current Outstanding Balance</span>
+          <div class="text-3xl font-black mt-2">₹<span id="stuDashPendingFees">0</span></div>
+          <button id="stuPayNowBtn" onclick="openFeePaymentModal()" class="mt-4 w-full py-2 bg-white text-blue-800 font-bold rounded-xl text-xs shadow hover:bg-blue-50 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-credit-card"></i> Pay Outstanding Fees Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Two Column Layout: Subjects Breakdown & Payments / Tracking -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left: Semester Subjects & Fees List -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-book-bookmark text-blue-600"></i> Enrolled Semester Subjects
+                </h3>
+                <p class="text-xs text-slate-500">Subjects & respective tuition rates configured by administration</p>
+              </div>
+              <span id="stuSemCollectionBadge" class="text-xs font-bold px-2.5 py-1 rounded-full"></span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="border-b border-slate-100 text-slate-400 text-xs uppercase font-semibold">
+                    <th class="py-2.5 px-2">Code</th>
+                    <th class="py-2.5 px-2">Subject Name</th>
+                    <th class="py-2.5 px-2">Type</th>
+                    <th class="py-2.5 px-2 text-right">Subject Fee</th>
+                  </tr>
+                </thead>
+                <tbody id="stuSubjectsTableBody" class="divide-y divide-slate-100">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Payment History List -->
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-receipt text-blue-600"></i> Fee Payment Records
+            </h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="border-b border-slate-100 text-slate-400 text-xs uppercase font-semibold">
+                    <th class="py-3 px-2">Date & Ref</th>
+                    <th class="py-3 px-2">Method</th>
+                    <th class="py-3 px-2">Amount</th>
+                    <th class="py-3 px-2">Status</th>
+                    <th class="py-3 px-2 text-right">Receipt</th>
+                  </tr>
+                </thead>
+                <tbody id="stuPaymentsTableBody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+            <div id="stuNoPaymentsMsg" class="py-8 text-center text-slate-400 text-sm hidden">
+              No transactions recorded yet.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Bank Info & Correction Tracking -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-md">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-building-columns"></i> Official College Banking & UPI Counter
+            </h4>
+            <div class="space-y-3 text-xs">
+              <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                <span class="text-slate-400 block mb-1">College UPI ID:</span>
+                <div class="flex items-center justify-between">
+                  <span id="stuDashCollegeUpi" class="font-mono font-bold text-white text-sm">democollege@upi</span>
+                  <button onclick="copyToClipboard('stuDashCollegeUpi')" class="text-blue-400 hover:text-white"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+              <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 grid grid-cols-2 gap-2">
+                <div>
+                  <span class="text-slate-400 block mb-0.5">Bank:</span>
+                  <span id="stuDashBankName" class="font-bold text-white">State Bank of India</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 block mb-0.5">IFSC:</span>
+                  <span id="stuDashIfsc" class="font-mono font-bold text-white">SBIN0001234</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Correction Tracker -->
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-timeline text-blue-600"></i> Request Status Tracker
+              </h3>
+              <span class="text-xs bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">Live</span>
+            </div>
+            <div id="stuTrackingContainer" class="space-y-4"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== 5. ADMIN DASHBOARD ==================== -->
+    <section id="viewAdminDashboard" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+      <!-- Admin Submenu Bar -->
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Administrative Suite</span>
+          <h2 class="text-2xl font-black text-slate-900">Democlass Administration</h2>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="switchAdminSubtab('students')" id="adminNavStudents" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition">
+            <i class="fa-solid fa-users mr-1"></i> Students
+          </button>
+          <button onclick="switchAdminSubtab('subjects')" id="adminNavSubjects" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+            <i class="fa-solid fa-book-bookmark mr-1"></i> Subjects & Fees
+          </button>
+          <button onclick="switchAdminSubtab('semesters')" id="adminNavSemesters" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+            <i class="fa-solid fa-toggle-on mr-1"></i> Semester Collection Status
+          </button>
+          <button onclick="switchAdminSubtab('corrections')" id="adminNavCorrections" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition relative">
+            <i class="fa-solid fa-user-check mr-1"></i> Approvals <span id="adminPendingBadge" class="bg-red-500 text-white text-[10px] px-1.5 py-0.2 rounded-full hidden">0</span>
+          </button>
+          <button onclick="switchAdminSubtab('settings')" id="adminNavSettings" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+            <i class="fa-solid fa-gear mr-1"></i> Settings & Banking
+          </button>
+          <button onclick="logoutAdmin()" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition">
+            <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-5 mb-8">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <span class="text-xs font-bold text-slate-400 uppercase">Enrolled Students</span>
+          <div id="statTotalStudents" class="text-2xl font-black text-slate-900 mt-1">0</div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <span class="text-xs font-bold text-emerald-600 uppercase">Total Fees Collected</span>
+          <div id="statTotalCollected" class="text-2xl font-black text-emerald-600 mt-1">₹0</div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <span class="text-xs font-bold text-blue-600 uppercase">Configured Subjects</span>
+          <div id="statTotalSubjects" class="text-2xl font-black text-blue-600 mt-1">0</div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <span class="text-xs font-bold text-purple-600 uppercase">Active Fee Semesters</span>
+          <div id="statActiveSemesters" class="text-2xl font-black text-purple-600 mt-1">0 / 10</div>
+        </div>
+      </div>
+
+      <!-- SUBTAB 1: STUDENTS DIRECTORY -->
+      <div id="adminTabStudentsContent" class="space-y-6">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="font-bold text-lg text-slate-900">Student Directory (UG 1–8 & PG 1–2)</h3>
+              <p class="text-xs text-slate-500">Add students with auto-generated unique student IDs</p>
+            </div>
+            <button onclick="openAddStudentModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-user-plus"></i> Add New Student
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 text-slate-400 text-xs uppercase font-semibold">
+                  <th class="py-3 px-3">Student</th>
+                  <th class="py-3 px-3">Unique ID</th>
+                  <th class="py-3 px-3">Mobile No</th>
+                  <th class="py-3 px-3">Course & Semester</th>
+                  <th class="py-3 px-3">Total Fee</th>
+                  <th class="py-3 px-3">Paid Fee</th>
+                  <th class="py-3 px-3">Due</th>
+                  <th class="py-3 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminStudentsTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBTAB 2: SUBJECTS & SUBJECT FEES MANAGEMENT (NEW FEATURE) -->
+      <div id="adminTabSubjectsContent" class="space-y-6 hidden">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="font-bold text-lg text-slate-900">Subject Catalog & Subject Fees Management</h3>
+              <p class="text-xs text-slate-500">Add subjects, assign individual subject fees, and edit existing subjects for UG (Sem 1-8) and PG (Sem 1-2)</p>
+            </div>
+            <button onclick="openSubjectModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-plus"></i> Add New Subject
+            </button>
+          </div>
+
+          <!-- Filter by Category / Semester -->
+          <div class="flex flex-wrap gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+            <div class="flex-1 min-w-[200px]">
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Filter by Semester</label>
+              <select id="filterSubjectSemester" onchange="renderAdminSubjectsTable()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold">
+                <option value="ALL">All Semesters (UG 1-8 & PG 1-2)</option>
+                <optgroup label="UG Semesters (1 to 8)">
+                  <option value="UG Semester 1">UG Semester 1</option>
+                  <option value="UG Semester 2">UG Semester 2</option>
+                  <option value="UG Semester 3">UG Semester 3</option>
+                  <option value="UG Semester 4">UG Semester 4</option>
+                  <option value="UG Semester 5">UG Semester 5</option>
+                  <option value="UG Semester 6">UG Semester 6</option>
+                  <option value="UG Semester 7">UG Semester 7</option>
+                  <option value="UG Semester 8">UG Semester 8</option>
+                </optgroup>
+                <optgroup label="PG Semesters (1 to 2)">
+                  <option value="PG Semester 1">PG Semester 1</option>
+                  <option value="PG Semester 2">PG Semester 2</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 text-slate-400 text-xs uppercase font-semibold">
+                  <th class="py-3 px-3">Subject Code</th>
+                  <th class="py-3 px-3">Subject Name</th>
+                  <th class="py-3 px-3">Semester Tier</th>
+                  <th class="py-3 px-3">Course/Stream</th>
+                  <th class="py-3 px-3 font-mono">Subject Fee</th>
+                  <th class="py-3 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="adminSubjectsTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBTAB 3: SEMESTER FEE COLLECTION STATUS (ACTIVE / INACTIVE TOGGLE) (NEW FEATURE) -->
+      <div id="adminTabSemestersContent" class="space-y-6 hidden">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <div class="mb-6">
+            <h3 class="font-bold text-lg text-slate-900">Semester-Wise Fee Collection Control</h3>
+            <p class="text-xs text-slate-500">Toggle active/inactive status for fee collection across 8 UG Semesters and 2 PG Semesters. Inactive semesters block student fee submission.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- UG Section (8 Semesters) -->
+            <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+                <h4 class="font-black text-sm uppercase tracking-wide text-blue-700 flex items-center gap-2">
+                  <i class="fa-solid fa-graduation-cap"></i> Undergraduate (UG) - 8 Semesters
+                </h4>
+                <span class="text-xs font-bold text-slate-500">8 Semesters</span>
+              </div>
+              <div id="ugSemesterListContainer" class="space-y-3"></div>
+            </div>
+
+            <!-- PG Section (2 Semesters) -->
+            <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+                <h4 class="font-black text-sm uppercase tracking-wide text-purple-700 flex items-center gap-2">
+                  <i class="fa-solid fa-user-graduate"></i> Postgraduate (PG) - 2 Semesters
+                </h4>
+                <span class="text-xs font-bold text-slate-500">2 Semesters</span>
+              </div>
+              <div id="pgSemesterListContainer" class="space-y-3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBTAB 4: CORRECTIONS & PHOTO APPROVALS -->
+      <div id="adminTabCorrectionsContent" class="space-y-6 hidden">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <h3 class="font-bold text-lg text-slate-900 mb-1">Student Correction & Photo Approvals</h3>
+          <p class="text-xs text-slate-500 mb-6">Review correction applications and approve or reject</p>
+          <div id="adminCorrectionsList" class="space-y-4"></div>
+        </div>
+      </div>
+
+      <!-- SUBTAB 5: SETTINGS & BRANDING & BANK ACCOUNTS -->
+      <div id="adminTabSettingsContent" class="space-y-6 hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <!-- Bank Account / UPI Config -->
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-lg text-slate-900 mb-1 flex items-center gap-2">
+              <i class="fa-solid fa-building-columns text-blue-600"></i> Fee Collection Accounts
+            </h3>
+            <p class="text-xs text-slate-500 mb-6">Configure UPI ID and Bank details to receive student fees</p>
+
+            <form id="adminBankSettingsForm" onsubmit="saveBankSettings(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">College UPI ID</label>
+                <input type="text" id="cfgUpiId" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-semibold text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Bank Name</label>
+                <input type="text" id="cfgBankName" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm">
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Account Number</label>
+                  <input type="text" id="cfgAccountNo" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-mono">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase mb-1">IFSC Code</label>
+                  <input type="text" id="cfgIfsc" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-mono uppercase">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Beneficiary Name</label>
+                <input type="text" id="cfgAccountHolder" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm">
+              </div>
+              <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition">
+                Save Bank & UPI Details
+              </button>
+            </form>
+          </div>
+
+          <!-- Branding & Institutional Secret Code -->
+          <div class="space-y-6">
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <h3 class="font-bold text-lg text-slate-900 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-paintbrush text-purple-600"></i> College Branding (Name & Logo)
+              </h3>
+              <form id="adminBrandingForm" onsubmit="saveBrandingSettings(event)" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase mb-1">College Name</label>
+                  <input type="text" id="cfgCollegeName" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-bold text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase mb-1">College Profile Photo / Logo</label>
+                  <div class="flex items-center gap-3">
+                    <div id="cfgLogoPreviewContainer" class="w-14 h-14 rounded-xl bg-slate-100 border flex items-center justify-center overflow-hidden">
+                      <img id="cfgLogoPreview" src="" class="w-full h-full object-cover hidden">
+                      <span id="cfgLogoPreviewPlaceholder" class="text-slate-400 text-xl"><i class="fa-solid fa-graduation-cap"></i></span>
+                    </div>
+                    <div class="flex-1 space-y-2">
+                      <input type="file" id="cfgLogoFileInput" accept="image/*" onchange="handleLogoFileSelect(event)" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
+                      <input type="url" id="cfgLogoUrl" placeholder="Or enter logo Image URL" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                  </div>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow transition">
+                  Update College Profile
+                </button>
+              </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <h3 class="font-bold text-lg text-slate-900 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-rose-600"></i> Change Institutional Security Code
+              </h3>
+              <form id="adminSecurityCodeForm" onsubmit="changeSecurityCode(event)" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase mb-1">New Security Code</label>
+                  <input type="text" id="cfgNewSecretCode" required placeholder="Enter new secret code" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm font-mono font-bold">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow transition">
+                  Update Security Code
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Modal: Subject Add & Edit (New Feature) -->
+  <div id="modalSubject" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+        <div>
+          <h3 id="subjectModalTitle" class="font-black text-xl text-slate-900">Add New Subject</h3>
+          <p class="text-xs text-slate-500">Configure subject code, semester tier, and subject fee</p>
+        </div>
+        <button onclick="closeModal('modalSubject')" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="subjectForm" onsubmit="handleSubjectSubmit(event)" class="space-y-4">
+        <input type="hidden" id="editSubjectId">
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Subject Code</label>
+            <input type="text" id="subCode" required placeholder="e.g. CS401" class="w-full px-4 py-2 rounded-xl border border-slate-300 font-mono font-bold text-sm uppercase">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Subject Fee (₹)</label>
+            <input type="number" id="subFee" required min="0" placeholder="e.g. 5000" class="w-full px-4 py-2 rounded-xl border border-slate-300 font-mono font-bold text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Subject Full Name</label>
+          <input type="text" id="subName" required placeholder="e.g. Advanced Operating Systems" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm font-semibold">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Target Semester</label>
+            <select id="subSemester" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold">
+              <optgroup label="UG Program (8 Semesters)">
+                <option value="UG Semester 1">UG Semester 1</option>
+                <option value="UG Semester 2">UG Semester 2</option>
+                <option value="UG Semester 3">UG Semester 3</option>
+                <option value="UG Semester 4">UG Semester 4</option>
+                <option value="UG Semester 5">UG Semester 5</option>
+                <option value="UG Semester 6">UG Semester 6</option>
+                <option value="UG Semester 7">UG Semester 7</option>
+                <option value="UG Semester 8">UG Semester 8</option>
+              </optgroup>
+              <optgroup label="PG Program (2 Semesters)">
+                <option value="PG Semester 1">PG Semester 1</option>
+                <option value="PG Semester 2">PG Semester 2</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Department/Course</label>
+            <select id="subCourse" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold">
+              <option value="B.Tech Computer Science">B.Tech Computer Science</option>
+              <option value="B.Tech Mechanical">B.Tech Mechanical</option>
+              <option value="BCA Applications">BCA Applications</option>
+              <option value="MCA Masters">MCA Masters</option>
+              <option value="MBA Management">MBA Management</option>
+              <option value="M.Tech Computer Science">M.Tech Computer Science</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition">
+          <i class="fa-solid fa-floppy-disk mr-1"></i> Save Subject & Fee
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Student (with UG 1-8 & PG 1-2 Semester Selector) -->
+  <div id="modalAddStudent" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+        <div>
+          <h3 class="font-black text-xl text-slate-900">Add New Student</h3>
+          <p class="text-xs text-slate-500">Auto-assigned unique Student ID with UG 8-Sem / PG 2-Sem curriculum</p>
+        </div>
+        <button onclick="closeModal('modalAddStudent')" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="addStudentForm" onsubmit="handleAddStudent(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Student Full Name</label>
+          <input type="text" id="newStuName" required placeholder="e.g. Vikram Sharma" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm font-semibold">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Mobile Number</label>
+            <input type="tel" id="newStuPhone" required placeholder="10-digit number" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm font-semibold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Course / Stream</label>
+            <select id="newStuCourse" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold">
+              <option value="B.Tech Computer Science">B.Tech Computer Science</option>
+              <option value="B.Tech Mechanical">B.Tech Mechanical</option>
+              <option value="BCA Applications">BCA Applications</option>
+              <option value="MCA Masters">MCA Masters</option>
+              <option value="MBA Management">MBA Management</option>
+              <option value="M.Tech Computer Science">M.Tech Computer Science</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Academic Semester</label>
+            <select id="newStuSemester" onchange="autoCalculateStudentFee()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold">
+              <optgroup label="Undergraduate (UG) - 8 Semesters">
+                <option value="UG Semester 1">UG Semester 1</option>
+                <option value="UG Semester 2">UG Semester 2</option>
+                <option value="UG Semester 3">UG Semester 3</option>
+                <option value="UG Semester 4">UG Semester 4</option>
+                <option value="UG Semester 5">UG Semester 5</option>
+                <option value="UG Semester 6">UG Semester 6</option>
+                <option value="UG Semester 7">UG Semester 7</option>
+                <option value="UG Semester 8">UG Semester 8</option>
+              </optgroup>
+              <optgroup label="Postgraduate (PG) - 2 Semesters">
+                <option value="PG Semester 1">PG Semester 1</option>
+                <option value="PG Semester 2">PG Semester 2</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Total Fee Amount (₹)</label>
+            <input type="number" id="newStuTotalFee" required placeholder="Calculated from subjects" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold font-mono">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Initial Paid Amount (₹)</label>
+          <input type="number" id="newStuPaidFee" placeholder="0" value="0" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold font-mono">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Student Photo</label>
+          <input type="file" id="newStuPhotoFile" accept="image/*" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition">
+          Generate ID & Register Student
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Payment with Dynamic UPI QR Code -->
+  <div id="modalPayment" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+        <div>
+          <h3 class="font-black text-xl text-slate-900">Make Semester Fee Payment</h3>
+          <p class="text-xs text-slate-500">Dynamic UPI payment & instantaneous verification</p>
+        </div>
+        <button onclick="closeModal('modalPayment')" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-5">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Payment Amount (₹)</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center font-bold text-slate-400">₹</span>
+            <input type="number" id="payAmountInput" min="100" oninput="regeneratePayQr()" class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 font-bold text-lg">
+          </div>
+          <div class="flex items-center justify-between text-xs text-slate-500 mt-1">
+            <span>Outstanding Due: <strong id="payModalDueAmount">₹0</strong></span>
+            <button type="button" onclick="fillPayFullDue()" class="text-blue-600 font-bold hover:underline">Pay Full Due</button>
+          </div>
+        </div>
+
+        <!-- Dynamic UPI QR -->
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+          <span class="text-xs font-bold text-blue-700 uppercase tracking-wider block mb-2">Scan & Pay Using UPI Apps</span>
+          <div id="paymentQrCodeContainer" class="flex justify-center p-3 bg-white w-44 h-44 mx-auto rounded-xl border border-slate-200 shadow-sm mb-2"></div>
+          <p class="text-xs text-slate-600 font-medium">UPI VPA: <strong id="payModalUpiId" class="font-mono text-slate-800">democollege@upi</strong></p>
+        </div>
+
+        <form id="paymentSubmitForm" onsubmit="handleFeePaymentSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Transaction Ref / UTR / UPI Ref ID</label>
+            <input type="text" id="payTransactionRef" required placeholder="e.g. 423589230192" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm font-mono font-semibold">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Payment Method</label>
+            <select id="payMethodSelect" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold">
+              <option value="UPI">UPI App (Google Pay, PhonePe, Paytm, BHIM)</option>
+              <option value="Net Banking">Net Banking (NEFT/IMPS)</option>
+              <option value="Bank Challan">Bank Counter Deposit</option>
+            </select>
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow transition">
+            Submit Payment & Get Receipt
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Correction Application -->
+  <div id="modalCorrection" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+        <div>
+          <h3 class="font-black text-xl text-slate-900">Apply for Record Correction</h3>
+          <p class="text-xs text-slate-500">Updates take effect upon administrative verification</p>
+        </div>
+        <button onclick="closeModal('modalCorrection')" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="correctionApplyForm" onsubmit="handleCorrectionSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Correction Type</label>
+          <select id="corrType" onchange="toggleCorrectionFields()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold">
+            <option value="Photo">Profile Photo Change</option>
+            <option value="Name">Name Spelling Correction</option>
+            <option value="Mobile">Mobile Number Update</option>
+          </select>
+        </div>
+
+        <div id="corrPhotoFieldGroup" class="space-y-2">
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select New Profile Photo</label>
+          <input type="file" id="corrPhotoFile" accept="image/*" onchange="previewCorrectionPhoto(event)" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
+          <div id="corrPhotoPreviewWrapper" class="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden border border-slate-200 hidden">
+            <img id="corrPhotoPreviewImg" src="" class="w-full h-full object-cover">
+          </div>
+        </div>
+
+        <div id="corrTextFieldGroup" class="hidden">
+          <label id="corrFieldLabel" class="block text-xs font-bold text-slate-700 uppercase mb-1">New Value</label>
+          <input type="text" id="corrNewValue" placeholder="Enter corrected value" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm font-semibold">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Reason for Request</label>
+          <textarea id="corrReason" required rows="2" placeholder="Explain reason for correction" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition">
+          Submit Correction Request
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Official Fee Receipt -->
+  <div id="modalReceipt" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 no-print">
+        <h3 class="font-bold text-base text-slate-800">Institutional Fee Receipt</h3>
+        <div class="flex items-center gap-2">
+          <button onclick="window.print()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-print"></i> Print Receipt
+          </button>
+          <button onclick="closeModal('modalReceipt')" class="text-slate-400 hover:text-slate-600 text-lg ml-2"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <div id="printableReceipt" class="border-2 border-slate-800 p-8 rounded-2xl relative bg-white">
+        <div class="flex items-start justify-between border-b-2 border-slate-800 pb-4 mb-5">
+          <div>
+            <h2 id="recCollegeName" class="text-xl font-black uppercase text-slate-900 tracking-tight">Demo College</h2>
+            <p class="text-[11px] text-slate-600">Directorate of Academic Accounts & Finance</p>
+          </div>
+          <div class="text-right">
+            <span class="inline-block px-3 py-1 rounded bg-emerald-100 text-emerald-800 font-black text-xs uppercase mb-1">PAID & VERIFIED</span>
+            <div class="text-[11px] text-slate-600">Receipt: <strong id="recReceiptNo" class="font-mono text-slate-900">REC-2026-0000</strong></div>
+            <div class="text-[11px] text-slate-600">Date: <span id="recDate">2026-09-20</span></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-xs mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Student Name</span>
+            <strong id="recStuName" class="text-slate-900 text-sm">Student Name</strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Unique Student ID</span>
+            <strong id="recStuId" class="font-mono text-blue-700 text-sm">DC-2026-1001</strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Academic Tier</span>
+            <span id="recSemester" class="text-slate-800 font-semibold">UG Semester 4</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Transaction Reference</span>
+            <span id="recTxnRef" class="font-mono text-slate-900 font-bold">UTR987654321</span>
+          </div>
+        </div>
+
+        <table class="w-full text-xs text-left mb-6 border-collapse">
+          <thead>
+            <tr class="border-b-2 border-slate-300 font-bold text-slate-700">
+              <th class="py-2">Description</th>
+              <th class="py-2 text-right">Amount Paid</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="py-2.5">Tuition Fees (Registered Subjects & Course Credit Installment)</td>
+              <td class="py-2.5 text-right font-mono font-bold" id="recAmountTotal">₹0</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="flex items-end justify-between pt-6 border-t border-slate-200 text-xs text-slate-600">
+          <div class="font-mono text-[10px] text-emerald-700 font-bold">
+            <i class="fa-solid fa-circle-check mr-1"></i> VALID ELECTRONIC RECEIPT
+          </div>
+          <div class="text-center">
+            <div class="h-8 border-b border-slate-400 w-36 mb-1 font-serif italic text-blue-900">Demo College Finance</div>
+            <span class="text-[10px] uppercase font-bold text-slate-400">Authorized Signature</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 mt-12 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+      <p>© 2026 <span id="footerCollegeName">Demo College</span>. Complete UG & PG Subject & Fee Management System.</p>
+      <div class="flex gap-4">
+        <span><i class="fa-solid fa-shield-halved text-blue-600"></i> Encrypted Portal</span>
+        <span><i class="fa-solid fa-bolt text-emerald-500"></i> Active Semester Collection</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    const STORAGE_KEYS = {
+      CONFIG: 'dc_config_v2',
+      ADMIN: 'dc_admin_v2',
+      STUDENTS: 'dc_students_v2',
+      SUBJECTS: 'dc_subjects_v2',
+      SEMESTERS: 'dc_semesters_v2',
+      PAYMENTS: 'dc_payments_v2',
+      CORRECTIONS: 'dc_corrections_v2',
+      SESSION_STUDENT: 'dc_session_student_v2',
+      SESSION_ADMIN: 'dc_session_admin_v2'
+    };
+
+    // 8 UG Semesters + 2 PG Semesters Definition
+    const UG_SEMESTERS = [
+      "UG Semester 1", "UG Semester 2", "UG Semester 3", "UG Semester 4",
+      "UG Semester 5", "UG Semester 6", "UG Semester 7", "UG Semester 8"
+    ];
+    const PG_SEMESTERS = [
+      "PG Semester 1", "PG Semester 2"
+    ];
+
+    function initDatabase() {
+      // 1. College Config
+      if (!localStorage.getItem(STORAGE_KEYS.CONFIG)) {
+        localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify({
+          name: "Demo College",
+          logo: "",
+          secretCode: "123456",
+          upiId: "democollege@upi",
+          bankName: "State Bank of India",
+          accountNo: "987654321012",
+          ifsc: "SBIN0001234",
+          accountHolder: "Demo College Fee Counter"
+        }));
+      }
+
+      // 2. Admin Credentials
+      if (!localStorage.getItem(STORAGE_KEYS.ADMIN)) {
+        localStorage.setItem(STORAGE_KEYS.ADMIN, JSON.stringify({
+          username: "admin",
+          password: "admin123"
+        }));
+      }
+
+      // 3. Semester Fee Collection Status (Active / Inactive for 8 UG & 2 PG)
+      if (!localStorage.getItem(STORAGE_KEYS.SEMESTERS)) {
+        const defaultSemesters = {};
+        UG_SEMESTERS.forEach((sem, index) => {
+          defaultSemesters[sem] = {
+            name: sem,
+            type: "UG",
+            semesterNumber: index + 1,
+            isActive: true // Collection active by default
+          };
+        });
+        PG_SEMESTERS.forEach((sem, index) => {
+          defaultSemesters[sem] = {
+            name: sem,
+            type: "PG",
+            semesterNumber: index + 1,
+            isActive: true
+          };
+        });
+        localStorage.setItem(STORAGE_KEYS.SEMESTERS, JSON.stringify(defaultSemesters));
+      }
+
+      // 4. Subject Catalog with Individual Subject Fees
+      if (!localStorage.getItem(STORAGE_KEYS.SUBJECTS)) {
+        const defaultSubjects = [
+          // UG Semester 1
+          { id: "SUB-101", code: "CS101", name: "Programming in C & Data Concepts", semester: "UG Semester 1", course: "B.Tech Computer Science", fee: 5500 },
+          { id: "SUB-102", code: "MA101", name: "Engineering Mathematics I", semester: "UG Semester 1", course: "B.Tech Computer Science", fee: 4000 },
+          { id: "SUB-103", code: "PH101", name: "Applied Physics & Optics Lab", semester: "UG Semester 1", course: "B.Tech Computer Science", fee: 4500 },
+
+          // UG Semester 4
+          { id: "SUB-104", code: "CS401", name: "Database Management Systems", semester: "UG Semester 4", course: "B.Tech Computer Science", fee: 6000 },
+          { id: "SUB-105", code: "CS402", name: "Design & Analysis of Algorithms", semester: "UG Semester 4", course: "B.Tech Computer Science", fee: 6500 },
+          { id: "SUB-106", code: "CS403", name: "Computer Architecture & Organization", semester: "UG Semester 4", course: "B.Tech Computer Science", fee: 5000 },
+
+          // UG Semester 8
+          { id: "SUB-107", code: "CS801", name: "Deep Learning & AI Capstone", semester: "UG Semester 8", course: "B.Tech Computer Science", fee: 8000 },
+          { id: "SUB-108", code: "CS802", name: "Major Industry Project & Viva", semester: "UG Semester 8", course: "B.Tech Computer Science", fee: 12000 },
+
+          // PG Semester 1
+          { id: "SUB-201", code: "MS101", name: "Advanced Algorithms & Optimization", semester: "PG Semester 1", course: "MCA Masters", fee: 9000 },
+          { id: "SUB-202", code: "MS102", name: "Distributed Cloud Architectures", semester: "PG Semester 1", course: "MCA Masters", fee: 9500 },
+
+          // PG Semester 2
+          { id: "SUB-203", code: "MS201", name: "Enterprise Systems & Thesis Project", semester: "PG Semester 2", course: "MCA Masters", fee: 15000 }
+        ];
+        localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(defaultSubjects));
+      }
+
+      // 5. Students Database (with sample UG & PG students)
+      if (!localStorage.getItem(STORAGE_KEYS.STUDENTS)) {
+        const defaultStudents = [
+          {
+            id: "DC-2026-1001",
+            name: "Rahul Sharma",
+            phone: "9876543210",
+            category: "UG",
+            semester: "UG Semester 4",
+            course: "B.Tech Computer Science",
+            totalFee: 17500, // 6000 + 6500 + 5000 (computed from subjects)
+            paidFee: 10000,
+            photo: ""
+          },
+          {
+            id: "DC-2026-1002",
+            name: "Pooja Verma",
+            phone: "9123456780",
+            category: "PG",
+            semester: "PG Semester 1",
+            course: "MCA Masters",
+            totalFee: 18500, // 9000 + 9500
+            paidFee: 18500,
+            photo: ""
+          }
+        ];
+        localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(defaultStudents));
+      }
+
+      // 6. Payments
+      if (!localStorage.getItem(STORAGE_KEYS.PAYMENTS)) {
+        localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify([
+          {
+            receiptNo: "REC-2026-5001",
+            studentId: "DC-2026-1001",
+            studentName: "Rahul Sharma",
+            semester: "UG Semester 4",
+            amount: 10000,
+            method: "UPI",
+            txnRef: "UPI7843920192",
+            date: "2026-08-14",
+            status: "Approved"
+          },
+          {
+            receiptNo: "REC-2026-5002",
+            studentId: "DC-2026-1002",
+            studentName: "Pooja Verma",
+            semester: "PG Semester 1",
+            amount: 18500,
+            method: "Net Banking",
+            txnRef: "NEFT839210384",
+            date: "2026-08-20",
+            status: "Approved"
+          }
+        ]));
+      }
+
+      // 7. Corrections
+      if (!localStorage.getItem(STORAGE_KEYS.CORRECTIONS)) {
+        localStorage.setItem(STORAGE_KEYS.CORRECTIONS, JSON.stringify([]));
+      }
+    }
+
+    // Accessors
+    const getConfig = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG));
+    const setConfig = (d) => localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(d));
+    const getStudents = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS) || "[]");
+    const setStudents = (d) => localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(d));
+    const getSubjects = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBJECTS) || "[]");
+    const setSubjects = (d) => localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(d));
+    const getSemesters = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.SEMESTERS) || "{}");
+    const setSemesters = (d) => localStorage.setItem(STORAGE_KEYS.SEMESTERS, JSON.stringify(d));
+    const getPayments = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.PAYMENTS) || "[]");
+    const setPayments = (d) => localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify(d));
+    const getCorrections = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.CORRECTIONS) || "[]");
+    const setCorrections = (d) => localStorage.setItem(STORAGE_KEYS.CORRECTIONS, JSON.stringify(d));
+
+    /* UI Toast */
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-blue-600 text-white'
+      };
+      toast.className = `${colors[type] || colors.info} px-4 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+      toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-xmark' : 'fa-circle-info')}"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function copyToClipboard(id) {
+      const text = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(text);
+      showToast("Copied: " + text, "info");
+    }
+
+    /* College Profile Branding */
+    function syncCollegeBrandingUI() {
+      const cfg = getConfig();
+      if (!cfg) return;
+
+      const name = cfg.name || "Demo College";
+      document.title = `${name} - Academic & Fee Portal`;
+      document.getElementById('navCollegeName').innerText = name;
+      document.getElementById('heroCollegeName').innerText = name;
+      document.getElementById('footerCollegeName').innerText = name;
+      document.getElementById('recCollegeName').innerText = name;
+
+      if (document.getElementById('cfgCollegeName')) {
+        document.getElementById('cfgCollegeName').value = name;
+      }
+
+      const logoUrl = cfg.logo;
+      const navLogoImg = document.getElementById('navLogoImg');
+      const navLogoFallback = document.getElementById('navLogoFallback');
+      const cfgLogoPreview = document.getElementById('cfgLogoPreview');
+      const cfgLogoPreviewPlaceholder = document.getElementById('cfgLogoPreviewPlaceholder');
+
+      if (logoUrl && logoUrl.trim() !== "") {
+        navLogoImg.src = logoUrl;
+        navLogoImg.classList.remove('hidden');
+        navLogoFallback.classList.add('hidden');
+
+        if (cfgLogoPreview) {
+          cfgLogoPreview.src = logoUrl;
+          cfgLogoPreview.classList.remove('hidden');
+          cfgLogoPreviewPlaceholder.classList.add('hidden');
+        }
+      } else {
+        navLogoImg.classList.add('hidden');
+        navLogoFallback.classList.remove('hidden');
+        if (cfgLogoPreview) {
+          cfgLogoPreview.classList.add('hidden');
+          cfgLogoPreviewPlaceholder.classList.remove('hidden');
+        }
+      }
+
+      if (document.getElementById('cfgUpiId')) {
+        document.getElementById('cfgUpiId').value = cfg.upiId || "";
+        document.getElementById('cfgBankName').value = cfg.bankName || "";
+        document.getElementById('cfgAccountNo').value = cfg.accountNo || "";
+        document.getElementById('cfgIfsc').value = cfg.ifsc || "";
+        document.getElementById('cfgAccountHolder').value = cfg.accountHolder || "";
+      }
+
+      if (document.getElementById('stuDashCollegeUpi')) {
+        document.getElementById('stuDashCollegeUpi').innerText = cfg.upiId || "democollege@upi";
+        document.getElementById('stuDashBankName').innerText = cfg.bankName || "State Bank of India";
+        document.getElementById('stuDashIfsc').innerText = cfg.ifsc || "SBIN0001234";
+        document.getElementById('payModalUpiId').innerText = cfg.upiId || "democollege@upi";
+      }
+    }
+
+    /* Views Navigation */
+    const views = {
+      home: document.getElementById('viewHome'),
+      studentLogin: document.getElementById('viewStudentLogin'),
+      adminLogin: document.getElementById('viewAdminLogin'),
+      studentDashboard: document.getElementById('viewStudentDashboard'),
+      adminDashboard: document.getElementById('viewAdminDashboard')
+    };
+
+    function switchView(viewName) {
+      Object.keys(views).forEach(v => {
+        if (v === viewName) views[v].classList.remove('hidden');
+        else views[v].classList.add('hidden');
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (viewName === 'studentDashboard') renderStudentDashboard();
+      if (viewName === 'adminDashboard') renderAdminDashboard();
+      syncCollegeBrandingUI();
+    }
+
+    /* =========================================================
+       STUDENT FLOW & PORTAL
+    ========================================================= */
+    function handleStudentLogin(e) {
+      e.preventDefault();
+      const id = document.getElementById('stuLoginId').value.trim().toUpperCase();
+      const phone = document.getElementById('stuLoginPhone').value.trim();
+
+      const student = getStudents().find(s => s.id.toUpperCase() === id && s.phone === phone);
+      if (!student) {
+        showToast("Invalid Student ID or Mobile Number", "error");
+        return;
+      }
+
+      sessionStorage.setItem(STORAGE_KEYS.SESSION_STUDENT, JSON.stringify(student));
+      showToast(`Welcome ${student.name}!`, "success");
+      switchView('studentDashboard');
+    }
+
+    function getLoggedInStudent() {
+      const stored = sessionStorage.getItem(STORAGE_KEYS.SESSION_STUDENT);
+      if (!stored) return null;
+      const current = JSON.parse(stored);
+      const student = getStudents().find(s => s.id === current.id);
+      return student || current;
+    }
+
+    function logoutStudent() {
+      sessionStorage.removeItem(STORAGE_KEYS.SESSION_STUDENT);
+      showToast("Logged out successfully", "info");
+      switchView('home');
+    }
+
+    function renderStudentDashboard() {
+      const student = getLoggedInStudent();
+      if (!student) {
+        switchView('studentLogin');
+        return;
+      }
+
+      // Demographic display
+      document.getElementById('stuDashName').innerText = student.name;
+      document.getElementById('stuDashId').innerText = student.id;
+      document.getElementById('stuDashSemester').innerText = student.semester;
+      document.getElementById('stuDashCourse').innerText = student.course;
+      document.getElementById('stuDashPhone').innerText = student.phone;
+      
+      const badge = document.getElementById('stuDashCategoryBadge');
+      badge.innerText = student.semester.startsWith('PG') ? 'PG PROGRAM' : 'UG PROGRAM';
+      badge.className = student.semester.startsWith('PG') 
+        ? "px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-purple-100 text-purple-800"
+        : "px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-100 text-blue-800";
+
+      // Photo
+      const photoImg = document.getElementById('stuDashPhoto');
+      const photoPlace = document.getElementById('stuDashPhotoPlaceholder');
+      if (student.photo) {
+        photoImg.src = student.photo;
+        photoImg.classList.remove('hidden');
+        photoPlace.classList.add('hidden');
+      } else {
+        photoImg.classList.add('hidden');
+        photoPlace.classList.remove('hidden');
+      }
+
+      // Check Semester Collection Status (Active vs Inactive)
+      const semesters = getSemesters();
+      const semConfig = semesters[student.semester] || { isActive: true };
+      const isCollectionActive = semConfig.isActive;
+
+      const alertContainer = document.getElementById('stuSemesterStatusAlert');
+      const payNowBtn = document.getElementById('stuPayNowBtn');
+      const semBadge = document.getElementById('stuSemCollectionBadge');
+
+      if (isCollectionActive) {
+        alertContainer.innerHTML = `
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3 text-emerald-800 text-xs font-semibold">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+            <div>
+              <span>Fee Collection is currently <strong>ACTIVE</strong> for ${student.semester}.</span>
+              <p class="text-emerald-700 font-normal">You can submit tuition fee installments using instant UPI or bank transfer below.</p>
+            </div>
+          </div>
+        `;
+        payNowBtn.classList.remove('opacity-50', 'pointer-events-none');
+        payNowBtn.innerHTML = `<i class="fa-solid fa-credit-card"></i> Pay Outstanding Fees Now`;
+        semBadge.innerText = "COLLECTION ACTIVE";
+        semBadge.className = "text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800";
+      } else {
+        alertContainer.innerHTML = `
+          <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-3 text-rose-800 text-xs font-semibold">
+            <i class="fa-solid fa-circle-exclamation text-rose-600 text-base"></i>
+            <div>
+              <span>Fee Collection is currently <strong>INACTIVE / CLOSED</strong> for ${student.semester} by Administration.</span>
+              <p class="text-rose-700 font-normal">Online payment submissions for this semester are temporarily paused. Contact accounts department for queries.</p>
+            </div>
+          </div>
+        `;
+        payNowBtn.classList.add('opacity-50', 'pointer-events-none');
+        payNowBtn.innerHTML = `<i class="fa-solid fa-ban"></i> Fee Collection Inactive`;
+        semBadge.innerText = "COLLECTION INACTIVE";
+        semBadge.className = "text-xs font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800";
+      }
+
+      // Enrolled Subjects & Fees
+      const subjects = getSubjects().filter(sub => sub.semester === student.semester);
+      const subTbody = document.getElementById('stuSubjectsTableBody');
+      subTbody.innerHTML = "";
+
+      let computedSubjectFeesTotal = 0;
+      if (subjects.length === 0) {
+        subTbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-400 text-xs">No subjects registered for this semester yet.</td></tr>`;
+      } else {
+        subjects.forEach(sub => {
+          computedSubjectFeesTotal += Number(sub.fee) || 0;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="py-2.5 px-2 font-mono font-bold text-blue-700 text-xs">${sub.code}</td>
+            <td class="py-2.5 px-2 font-semibold text-slate-800 text-xs">${sub.name}</td>
+            <td class="py-2.5 px-2 text-[11px] text-slate-500">${sub.course}</td>
+            <td class="py-2.5 px-2 font-mono font-bold text-slate-900 text-xs text-right">₹${Number(sub.fee).toLocaleString('en-IN')}</td>
+          `;
+          subTbody.appendChild(tr);
+        });
+      }
+
+      // Keep student total fee synchronized with subject fees
+      const total = Number(student.totalFee) || computedSubjectFeesTotal;
+      const paid = Number(student.paidFee) || 0;
+      const due = Math.max(0, total - paid);
+
+      document.getElementById('stuDashTotalFees').innerText = total.toLocaleString('en-IN');
+      document.getElementById('stuDashPaidFees').innerText = paid.toLocaleString('en-IN');
+      document.getElementById('stuDashPendingFees').innerText = due.toLocaleString('en-IN');
+
+      // Payments list
+      const payments = getPayments().filter(p => p.studentId === student.id);
+      const payTbody = document.getElementById('stuPaymentsTableBody');
+      const noPayMsg = document.getElementById('stuNoPaymentsMsg');
+      payTbody.innerHTML = "";
+
+      if (payments.length === 0) {
+        noPayMsg.classList.remove('hidden');
+      } else {
+        noPayMsg.classList.add('hidden');
+        payments.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="py-3 px-2">
+              <div class="font-bold text-slate-800 text-xs">${p.date}</div>
+              <div class="text-[10px] font-mono text-slate-400">${p.receiptNo}</div>
+            </td>
+            <td class="py-3 px-2 text-xs">
+              <span class="font-medium text-slate-700">${p.method}</span>
+              <div class="text-[10px] font-mono text-slate-400">Ref: ${p.txnRef}</div>
+            </td>
+            <td class="py-3 px-2 font-bold font-mono text-slate-900 text-xs">₹${Number(p.amount).toLocaleString('en-IN')}</td>
+            <td class="py-3 px-2">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${p.status}</span>
+            </td>
+            <td class="py-3 px-2 text-right">
+              <button onclick="viewReceipt('${p.receiptNo}')" class="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition">
+                <i class="fa-solid fa-receipt mr-1"></i> Receipt
+              </button>
+            </td>
+          `;
+          payTbody.appendChild(tr);
+        });
+      }
+
+      // Tracking Render
+      renderStudentTracking(student.id);
+    }
+
+    function renderStudentTracking(studentId) {
+      const container = document.getElementById('stuTrackingContainer');
+      const reqs = getCorrections().filter(c => c.studentId === studentId);
+      container.innerHTML = "";
+
+      if (reqs.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No active correction requests in progress.</div>`;
+        return;
+      }
+
+      reqs.forEach(req => {
+        const item = document.createElement('div');
+        item.className = "p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2";
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-800">Req: ${req.type} Update</span>
+            <span class="px-2 py-0.5 rounded-full font-bold ${req.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : (req.status === 'Rejected' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800')}">${req.status}</span>
+          </div>
+          <div class="text-slate-500">${req.reason}</div>
+          <div class="text-[11px] bg-white p-2 rounded-lg border border-slate-200">
+            <strong>Admin Remarks:</strong> ${req.remarks}
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    /* UPI Dynamic Payment Generation */
+    function openFeePaymentModal() {
+      const student = getLoggedInStudent();
+      if (!student) return;
+
+      const semConfig = getSemesters()[student.semester] || { isActive: true };
+      if (!semConfig.isActive) {
+        showToast(`Fee collection is currently inactive for ${student.semester}`, "error");
+        return;
+      }
+
+      const due = Math.max(0, Number(student.totalFee) - Number(student.paidFee));
+      document.getElementById('payModalDueAmount').innerText = `₹${due.toLocaleString('en-IN')}`;
+      document.getElementById('payAmountInput').value = due > 0 ? due : 2000;
+      document.getElementById('payTransactionRef').value = "";
+
+      regeneratePayQr();
+      openModal('modalPayment');
+    }
+
+    function fillPayFullDue() {
+      const student = getLoggedInStudent();
+      if (!student) return;
+      const due = Math.max(0, Number(student.totalFee) - Number(student.paidFee));
+      document.getElementById('payAmountInput').value = due;
+      regeneratePayQr();
+    }
+
+    function regeneratePayQr() {
+      const cfg = getConfig();
+      const student = getLoggedInStudent();
+      const amount = document.getElementById('payAmountInput').value || 100;
+      const upiId = cfg.upiId || "democollege@upi";
+      const collegeName = encodeURIComponent(cfg.name || "Demo College");
+      const stuId = student ? student.id : "STU";
+
+      const uri = `upi://pay?pa=${upiId}&pn=${collegeName}&am=${amount}&cu=INR&tn=Fee_${stuId}`;
+      const wrapper = document.getElementById('paymentQrCodeContainer');
+      wrapper.innerHTML = "";
+
+      new QRCode(wrapper, {
+        text: uri,
+        width: 150,
+        height: 150,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    function handleFeePaymentSubmit(e) {
+      e.preventDefault();
+      const student = getLoggedInStudent();
+      if (!student) return;
+
+      const semConfig = getSemesters()[student.semester] || { isActive: true };
+      if (!semConfig.isActive) {
+        showToast("Collection is inactive for this semester. Payment rejected.", "error");
+        return;
+      }
+
+      const amount = Number(document.getElementById('payAmountInput').value);
+      const txnRef = document.getElementById('payTransactionRef').value.trim();
+      const method = document.getElementById('payMethodSelect').value;
+
+      if (!amount || amount <= 0) {
+        showToast("Please enter a valid amount", "error");
+        return;
+      }
+
+      const receiptNo = "REC-2026-" + Math.floor(1000 + Math.random() * 9000);
+      const newPayment = {
+        receiptNo: receiptNo,
+        studentId: student.id,
+        studentName: student.name,
+        semester: student.semester,
+        amount: amount,
+        method: method,
+        txnRef: txnRef,
+        date: new Date().toISOString().split('T')[0],
+        status: "Approved"
+      };
+
+      const payments = getPayments();
+      payments.unshift(newPayment);
+      setPayments(payments);
+
+      // Credit student balance
+      const students = getStudents();
+      const idx = students.findIndex(s => s.id === student.id);
+      if (idx !== -1) {
+        students[idx].paidFee = (Number(students[idx].paidFee) || 0) + amount;
+        setStudents(students);
+        sessionStorage.setItem(STORAGE_KEYS.SESSION_STUDENT, JSON.stringify(students[idx]));
+      }
+
+      closeModal('modalPayment');
+      showToast(`Fee payment of ₹${amount.toLocaleString('en-IN')} verified!`, "success");
+      renderStudentDashboard();
+      viewReceipt(receiptNo);
+    }
+
+    function viewReceipt(receiptNo) {
+      const p = getPayments().find(pay => pay.receiptNo === receiptNo);
+      if (!p) return;
+
+      const student = getStudents().find(s => s.id === p.studentId) || { name: p.studentName, id: p.studentId, semester: p.semester };
+      const cfg = getConfig();
+
+      document.getElementById('recReceiptNo').innerText = p.receiptNo;
+      document.getElementById('recDate').innerText = p.date;
+      document.getElementById('recStuName').innerText = student.name;
+      document.getElementById('recStuId').innerText = student.id;
+      document.getElementById('recSemester').innerText = p.semester || student.semester;
+      document.getElementById('recTxnRef').innerText = p.txnRef;
+      document.getElementById('recAmountTotal').innerText = `₹${Number(p.amount).toLocaleString('en-IN')}`;
+
+      syncCollegeBrandingUI();
+      openModal('modalReceipt');
+    }
+
+    /* Correction Request Submission */
+    let tempCorrPhoto = "";
+    function openCorrectionModal(type) {
+      document.getElementById('corrType').value = type === 'photo' ? 'Photo' : 'Name';
+      toggleCorrectionFields();
+      document.getElementById('corrReason').value = "";
+      document.getElementById('corrNewValue').value = "";
+      tempCorrPhoto = "";
+      document.getElementById('corrPhotoPreviewWrapper').classList.add('hidden');
+      openModal('modalCorrection');
+    }
+
+    function toggleCorrectionFields() {
+      const type = document.getElementById('corrType').value;
+      if (type === 'Photo') {
+        document.getElementById('corrPhotoFieldGroup').classList.remove('hidden');
+        document.getElementById('corrTextFieldGroup').classList.add('hidden');
+      } else {
+        document.getElementById('corrPhotoFieldGroup').classList.add('hidden');
+        document.getElementById('corrTextFieldGroup').classList.remove('hidden');
+        document.getElementById('corrFieldLabel').innerText = `New ${type} Value`;
+      }
+    }
+
+    function previewCorrectionPhoto(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        tempCorrPhoto = evt.target.result;
+        document.getElementById('corrPhotoPreviewImg').src = tempCorrPhoto;
+        document.getElementById('corrPhotoPreviewWrapper').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleCorrectionSubmit(e) {
+      e.preventDefault();
+      const student = getLoggedInStudent();
+      if (!student) return;
+
+      const type = document.getElementById('corrType').value;
+      const reason = document.getElementById('corrReason').value.trim();
+      const val = document.getElementById('corrNewValue').value.trim();
+
+      const newCorr = {
+        id: "CORR-" + Math.floor(1000 + Math.random() * 9000),
+        studentId: student.id,
+        studentName: student.name,
+        type: type,
+        newValue: val,
+        photoData: type === 'Photo' ? tempCorrPhoto : "",
+        reason: reason,
+        status: "Under Verification",
+        remarks: "Request submitted to administration counter.",
+        timestamp: new Date().toLocaleDateString('en-GB')
+      };
+
+      const reqs = getCorrections();
+      reqs.unshift(newCorr);
+      setCorrections(reqs);
+
+      closeModal('modalCorrection');
+      showToast("Correction request logged!", "success");
+      renderStudentDashboard();
+    }
+
+    /* =========================================================
+       ADMIN AUTHENTICATION & PORTAL
+    ========================================================= */
+    function toggleAdminTab(tab) {
+      if (tab === 'login') {
+        document.getElementById('adminLoginForm').classList.remove('hidden');
+        document.getElementById('adminRegisterForm').classList.add('hidden');
+        document.getElementById('adminTabLogin').className = "font-bold text-base text-blue-600 border-b-2 border-blue-600 pb-2";
+        document.getElementById('adminTabRegister').className = "font-bold text-base text-slate-400 hover:text-slate-600 pb-2";
+      } else {
+        document.getElementById('adminLoginForm').classList.add('hidden');
+        document.getElementById('adminRegisterForm').classList.remove('hidden');
+        document.getElementById('adminTabRegister').className = "font-bold text-base text-blue-600 border-b-2 border-blue-600 pb-2";
+        document.getElementById('adminTabLogin').className = "font-bold text-base text-slate-400 hover:text-slate-600 pb-2";
+      }
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('admUsername').value.trim();
+      const p = document.getElementById('admPassword').value.trim();
+      const admin = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN));
+
+      if (admin && admin.username === u && admin.password === p) {
+        sessionStorage.setItem(STORAGE_KEYS.SESSION_ADMIN, 'true');
+        showToast("Admin authenticated", "success");
+        switchView('adminDashboard');
+      } else {
+        showToast("Invalid admin username or password", "error");
+      }
+    }
+
+    function handleAdminRegister(e) {
+      e.preventDefault();
+      const code = document.getElementById('regSecretCode').value.trim();
+      const u = document.getElementById('regUsername').value.trim();
+      const p = document.getElementById('regPassword').value.trim();
+      const cfg = getConfig();
+
+      if (code !== cfg.secretCode) {
+        showToast("Invalid Secret Code!", "error");
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEYS.ADMIN, JSON.stringify({ username: u, password: p }));
+      showToast("Admin account registered successfully!", "success");
+      toggleAdminTab('login');
+      document.getElementById('admUsername').value = u;
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem(STORAGE_KEYS.SESSION_ADMIN);
+      showToast("Admin session signed out", "info");
+      switchView('home');
+    }
+
+    function switchAdminSubtab(subtab) {
+      const tabs = ['students', 'subjects', 'semesters', 'corrections', 'settings'];
+      tabs.forEach(t => {
+        const content = document.getElementById(`adminTab${capitalize(t)}Content`);
+        const nav = document.getElementById(`adminNav${capitalize(t)}`);
+        if (t === subtab) {
+          content.classList.remove('hidden');
+          nav.className = "px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition";
+        } else {
+          content.classList.add('hidden');
+          nav.className = "px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition";
+        }
+      });
+      renderAdminDashboard();
+    }
+
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    function renderAdminDashboard() {
+      const students = getStudents();
+      const subjects = getSubjects();
+      const semesters = getSemesters();
+      const corrections = getCorrections();
+
+      let totalCollected = 0;
+      students.forEach(s => totalCollected += Number(s.paidFee) || 0);
+
+      document.getElementById('statTotalStudents').innerText = students.length;
+      document.getElementById('statTotalCollected').innerText = `₹${totalCollected.toLocaleString('en-IN')}`;
+      document.getElementById('statTotalSubjects').innerText = subjects.length;
+
+      // Count active semesters
+      let activeCount = 0;
+      Object.values(semesters).forEach(sem => { if (sem.isActive) activeCount++; });
+      document.getElementById('statActiveSemesters').innerText = `${activeCount} / 10`;
+
+      // Corrections badge
+      const pendingCorrections = corrections.filter(c => c.status !== 'Approved' && c.status !== 'Rejected');
+      const badge = document.getElementById('adminPendingBadge');
+      if (pendingCorrections.length > 0) {
+        badge.innerText = pendingCorrections.length;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      // Render Admin Components
+      renderAdminStudentsTable();
+      renderAdminSubjectsTable();
+      renderAdminSemestersControl();
+      renderAdminCorrections();
+      syncCollegeBrandingUI();
+    }
+
+    /* 1. Admin Students Table */
+    function renderAdminStudentsTable() {
+      const students = getStudents();
+      const tbody = document.getElementById('adminStudentsTableBody');
+      tbody.innerHTML = "";
+
+      students.forEach(s => {
+        const total = Number(s.totalFee) || 0;
+        const paid = Number(s.paidFee) || 0;
+        const due = Math.max(0, total - paid);
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition text-xs";
+        tr.innerHTML = `
+          <td class="py-3 px-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-slate-500">
+                ${s.photo ? `<img src="${s.photo}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user"></i>`}
+              </div>
+              <div>
+                <strong class="text-slate-900 block">${s.name}</strong>
+                <span class="text-[10px] text-slate-400">${s.phone}</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-3 font-mono font-bold text-blue-700">${s.id}</td>
+          <td class="py-3 px-3 font-mono">${s.phone}</td>
+          <td class="py-3 px-3">
+            <span class="font-bold text-slate-800">${s.semester}</span>
+            <div class="text-[10px] text-slate-400">${s.course}</div>
+          </td>
+          <td class="py-3 px-3 font-mono font-semibold">₹${total.toLocaleString('en-IN')}</td>
+          <td class="py-3 px-3 font-mono font-bold text-emerald-600">₹${paid.toLocaleString('en-IN')}</td>
+          <td class="py-3 px-3 font-mono font-bold ${due > 0 ? 'text-amber-600' : 'text-slate-400'}">₹${due.toLocaleString('en-IN')}</td>
+          <td class="py-3 px-3 text-right">
+            <button onclick="deleteStudent('${s.id}')" class="text-rose-600 hover:text-rose-800 p-1" title="Delete">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* 2. Admin Subjects & Fees Management (Add, Edit, View) */
+    function renderAdminSubjectsTable() {
+      const subjects = getSubjects();
+      const filterSem = document.getElementById('filterSubjectSemester').value;
+      const tbody = document.getElementById('adminSubjectsTableBody');
+      tbody.innerHTML = "";
+
+      const filtered = filterSem === 'ALL' ? subjects : subjects.filter(s => s.semester === filterSem);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 text-xs">No subjects found for selection. Click "Add New Subject" above.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(sub => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition text-xs";
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-mono font-bold text-blue-700">${sub.code}</td>
+          <td class="py-3 px-3 font-bold text-slate-800">${sub.name}</td>
+          <td class="py-3 px-3">
+            <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${sub.semester.startsWith('PG') ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
+              ${sub.semester}
+            </span>
+          </td>
+          <td class="py-3 px-3 text-slate-600">${sub.course}</td>
+          <td class="py-3 px-3 font-mono font-bold text-emerald-700">₹${Number(sub.fee).toLocaleString('en-IN')}</td>
+          <td class="py-3 px-3 text-right space-x-2">
+            <button onclick="editSubject('${sub.id}')" class="px-2.5 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg font-bold transition">
+              <i class="fa-solid fa-pen-to-square mr-1"></i> Edit
+            </button>
+            <button onclick="deleteSubject('${sub.id}')" class="text-rose-600 hover:text-rose-800 p-1" title="Delete">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openSubjectModal(isEdit = false) {
+      document.getElementById('subjectModalTitle').innerText = isEdit ? "Edit Subject & Fee" : "Add New Subject";
+      if (!isEdit) {
+        document.getElementById('editSubjectId').value = "";
+        document.getElementById('subCode').value = "";
+        document.getElementById('subName').value = "";
+        document.getElementById('subFee').value = "";
+      }
+      openModal('modalSubject');
+    }
+
+    function editSubject(subjectId) {
+      const sub = getSubjects().find(s => s.id === subjectId);
+      if (!sub) return;
+
+      document.getElementById('editSubjectId').value = sub.id;
+      document.getElementById('subCode').value = sub.code;
+      document.getElementById('subName').value = sub.name;
+      document.getElementById('subFee').value = sub.fee;
+      document.getElementById('subSemester').value = sub.semester;
+      document.getElementById('subCourse').value = sub.course;
+
+      openSubjectModal(true);
+    }
+
+    function handleSubjectSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editSubjectId').value;
+      const code = document.getElementById('subCode').value.trim().toUpperCase();
+      const name = document.getElementById('subName').value.trim();
+      const fee = Number(document.getElementById('subFee').value) || 0;
+      const semester = document.getElementById('subSemester').value;
+      const course = document.getElementById('subCourse').value;
+
+      const subjects = getSubjects();
+
+      if (editId) {
+        // Edit existing subject
+        const idx = subjects.findIndex(s => s.id === editId);
+        if (idx !== -1) {
+          subjects[idx] = { ...subjects[idx], code, name, fee, semester, course };
+          setSubjects(subjects);
+          showToast(`Subject ${code} updated successfully!`, "success");
+        }
+      } else {
+        // Add new subject
+        const newSubject = {
+          id: "SUB-" + Math.floor(1000 + Math.random() * 9000),
+          code,
+          name,
+          fee,
+          semester,
+          course
+        };
+        subjects.push(newSubject);
+        setSubjects(subjects);
+        showToast(`New subject ${code} added with fee ₹${fee}!`, "success");
+      }
+
+      closeModal('modalSubject');
+      renderAdminDashboard();
+    }
+
+    function deleteSubject(subjectId) {
+      if (!confirm("Are you sure you want to delete this subject?")) return;
+      let subjects = getSubjects().filter(s => s.id !== subjectId);
+      setSubjects(subjects);
+      showToast("Subject removed", "info");
+      renderAdminDashboard();
+    }
+
+    /* 3. Admin Semester-wise Collection Control (Active / Inactive for 8 UG & 2 PG) */
+    function renderAdminSemestersControl() {
+      const semesters = getSemesters();
+      const ugContainer = document.getElementById('ugSemesterListContainer');
+      const pgContainer = document.getElementById('pgSemesterListContainer');
+      ugContainer.innerHTML = "";
+      pgContainer.innerHTML = "";
+
+      // Render 8 UG Semesters
+      UG_SEMESTERS.forEach((semName, i) => {
+        const sem = semesters[semName] || { name: semName, isActive: true };
+        const card = createSemesterToggleCard(semName, sem.isActive, "UG", i + 1);
+        ugContainer.appendChild(card);
+      });
+
+      // Render 2 PG Semesters
+      PG_SEMESTERS.forEach((semName, i) => {
+        const sem = semesters[semName] || { name: semName, isActive: true };
+        const card = createSemesterToggleCard(semName, sem.isActive, "PG", i + 1);
+        pgContainer.appendChild(card);
+      });
+    }
+
+    function createSemesterToggleCard(semName, isActive, type, number) {
+      const div = document.createElement('div');
+      div.className = "flex items-center justify-between p-3.5 bg-white rounded-xl border border-slate-200 shadow-sm";
+      div.innerHTML = `
+        <div>
+          <strong class="text-sm text-slate-800 block">${semName}</strong>
+          <span class="text-[11px] ${isActive ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">
+            ${isActive ? '● Fee Collection ACTIVE' : '○ Collection INACTIVE'}
+          </span>
+        </div>
+        <button onclick="toggleSemesterStatus('${semName}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+          isActive 
+            ? 'bg-emerald-100 hover:bg-rose-100 text-emerald-800 hover:text-rose-800' 
+            : 'bg-rose-100 hover:bg-emerald-100 text-rose-800 hover:text-emerald-800'
+        }">
+          <i class="fa-solid ${isActive ? 'fa-toggle-on text-emerald-600' : 'fa-toggle-off text-rose-600'} text-base"></i>
+          <span>${isActive ? 'Set Inactive' : 'Set Active'}</span>
+        </button>
+      `;
+      return div;
+    }
+
+    function toggleSemesterStatus(semName) {
+      const semesters = getSemesters();
+      if (!semesters[semName]) {
+        semesters[semName] = { name: semName, isActive: true };
+      }
+      semesters[semName].isActive = !semesters[semName].isActive;
+      setSemesters(semesters);
+
+      const status = semesters[semName].isActive ? "ACTIVATED" : "DEACTIVATED";
+      showToast(`${semName} fee collection ${status}!`, "info");
+      renderAdminDashboard();
+    }
+
+    /* 4. Admin Student Registration & Auto Fee Calculation */
+    function openAddStudentModal() {
+      document.getElementById('newStuName').value = "";
+      document.getElementById('newStuPhone').value = "";
+      document.getElementById('newStuPaidFee').value = "0";
+      autoCalculateStudentFee();
+      openModal('modalAddStudent');
+    }
+
+    function autoCalculateStudentFee() {
+      const selectedSemester = document.getElementById('newStuSemester').value;
+      const subjects = getSubjects().filter(s => s.semester === selectedSemester);
+      let calculatedTotal = 0;
+      subjects.forEach(sub => calculatedTotal += Number(sub.fee) || 0);
+
+      // Default to computed total from subjects (or fallback if no subjects yet)
+      document.getElementById('newStuTotalFee').value = calculatedTotal > 0 ? calculatedTotal : 35000;
+    }
+
+    function handleAddStudent(e) {
+      e.preventDefault();
+      const name = document.getElementById('newStuName').value.trim();
+      const phone = document.getElementById('newStuPhone').value.trim();
+      const course = document.getElementById('newStuCourse').value;
+      const semester = document.getElementById('newStuSemester').value;
+      const totalFee = Number(document.getElementById('newStuTotalFee').value) || 0;
+      const paidFee = Number(document.getElementById('newStuPaidFee').value) || 0;
+
+      const students = getStudents();
+      // Generate Unique Student ID
+      let uniqueId = "";
+      let exists = true;
+      while (exists) {
+        const rand = Math.floor(1000 + Math.random() * 9000);
+        uniqueId = `DC-2026-${rand}`;
+        exists = students.some(s => s.id === uniqueId);
+      }
+
+      const fileInput = document.getElementById('newStuPhotoFile');
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (evt) => finalizeStudentSave(evt.target.result);
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        finalizeStudentSave("");
+      }
+
+      function finalizeStudentSave(photoData) {
+        students.unshift({
+          id: uniqueId,
+          name,
+          phone,
+          category: semester.startsWith('PG') ? 'PG' : 'UG',
+          semester,
+          course,
+          totalFee,
+          paidFee,
+          photo: photoData
+        });
+        setStudents(students);
+        closeModal('modalAddStudent');
+        showToast(`Student enrolled! Unique ID: ${uniqueId}`, "success");
+        renderAdminDashboard();
+      }
+    }
+
+    function deleteStudent(id) {
+      if (!confirm(`Delete student record ${id}?`)) return;
+      const filtered = getStudents().filter(s => s.id !== id);
+      setStudents(filtered);
+      showToast("Student deleted", "info");
+      renderAdminDashboard();
+    }
+
+    /* 5. Admin Approvals */
+    function renderAdminCorrections() {
+      const reqs = getCorrections();
+      const container = document.getElementById('adminCorrectionsList');
+      container.innerHTML = "";
+
+      if (reqs.length === 0) {
+        container.innerHTML = `<div class="py-8 text-center text-slate-400 text-xs">No pending student requests.</div>`;
+        return;
+      }
+
+      reqs.forEach(c => {
+        const item = document.createElement('div');
+        item.className = "p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
+        item.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-mono text-xs font-bold text-slate-500">${c.id}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">${c.type}</span>
+              <strong class="text-xs text-slate-800">Student ID: ${c.studentId}</strong>
+            </div>
+            <div class="text-xs text-slate-600">"Reason: ${c.reason}"</div>
+            ${c.type === 'Photo' && c.photoData ? `<img src="${c.photoData}" class="w-12 h-12 rounded-lg object-cover mt-2 border">` : ''}
+            ${c.newValue ? `<div class="text-xs text-blue-700 font-bold mt-1">Proposed Value: ${c.newValue}</div>` : ''}
+          </div>
+          <div class="flex items-center gap-2">
+            ${c.status !== 'Approved' && c.status !== 'Rejected' ? `
+              <button onclick="updateCorrectionStatus('${c.id}', 'Approved')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">Approve</button>
+              <button onclick="updateCorrectionStatus('${c.id}', 'Rejected')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition">Reject</button>
+            ` : `<span class="text-xs font-bold text-slate-400">Processed (${c.status})</span>`}
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function updateCorrectionStatus(id, newStatus) {
+      const reqs = getCorrections();
+      const req = reqs.find(c => c.id === id);
+      if (!req) return;
+
+      req.status = newStatus;
+      req.remarks = newStatus === 'Approved' ? 'Verified & approved by administration counter.' : 'Discrepancy found with records.';
+
+      if (newStatus === 'Approved') {
+        const students = getStudents();
+        const idx = students.findIndex(s => s.id === req.studentId);
+        if (idx !== -1) {
+          if (req.type === 'Photo' && req.photoData) students[idx].photo = req.photoData;
+          if (req.type === 'Name' && req.newValue) students[idx].name = req.newValue;
+          if (req.type === 'Mobile' && req.newValue) students[idx].phone = req.newValue;
+          setStudents(students);
+        }
+      }
+
+      setCorrections(reqs);
+      showToast(`Request ${id} marked as ${newStatus}`, "info");
+      renderAdminDashboard();
+    }
+
+    /* 6. Settings, Bank, Branding, Secret Code */
+    function saveBankSettings(e) {
+      e.preventDefault();
+      const cfg = getConfig();
+      cfg.upiId = document.getElementById('cfgUpiId').value.trim();
+      cfg.bankName = document.getElementById('cfgBankName').value.trim();
+      cfg.accountNo = document.getElementById('cfgAccountNo').value.trim();
+      cfg.ifsc = document.getElementById('cfgIfsc').value.trim();
+      cfg.accountHolder = document.getElementById('cfgAccountHolder').value.trim();
+
+      setConfig(cfg);
+      showToast("Banking & UPI settings updated!", "success");
+      syncCollegeBrandingUI();
+    }
+
+    let tempCollegeLogo = "";
+    function handleLogoFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        tempCollegeLogo = evt.target.result;
+        document.getElementById('cfgLogoPreview').src = tempCollegeLogo;
+        document.getElementById('cfgLogoPreview').classList.remove('hidden');
+        document.getElementById('cfgLogoPreviewPlaceholder').classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveBrandingSettings(e) {
+      e.preventDefault();
+      const cfg = getConfig();
+      const name = document.getElementById('cfgCollegeName').value.trim();
+      const url = document.getElementById('cfgLogoUrl').value.trim();
+
+      if (name) cfg.name = name;
+      if (tempCollegeLogo) cfg.logo = tempCollegeLogo;
+      else if (url) cfg.logo = url;
+
+      setConfig(cfg);
+      syncCollegeBrandingUI();
+      showToast("College profile updated for all visitors!", "success");
+    }
+
+    function changeSecurityCode(e) {
+      e.preventDefault();
+      const code = document.getElementById('cfgNewSecretCode').value.trim();
+      if (!code) return;
+
+      const cfg = getConfig();
+      cfg.secretCode = code;
+      setConfig(cfg);
+
+      document.getElementById('cfgNewSecretCode').value = "";
+      showToast(`Security Code changed to: ${code}`, "success");
+    }
+
+    /* Modal Helpers */
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
+    /* Demo Quick Fillers */
+    function fillStudentDemo() {
+      switchView('studentLogin');
+      document.getElementById('stuLoginId').value = "DC-2026-1001";
+      document.getElementById('stuLoginPhone').value = "9876543210";
+      showToast("Loaded UG student demo credentials!", "info");
+    }
+
+    function fillAdminDemo() {
+      switchView('adminLogin');
+      toggleAdminTab('login');
+      document.getElementById('admUsername').value = "admin";
+      document.getElementById('admPassword').value = "admin123";
+      showToast("Loaded admin credentials!", "info");
+    }
+
+    /* Initialization */
+    window.addEventListener('DOMContentLoaded', () => {
+      initDatabase();
+      syncCollegeBrandingUI();
+      switchView('home');
+    });
+  </script>
+</body>
+</html>
